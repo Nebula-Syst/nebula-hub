@@ -59,6 +59,17 @@
 
 This fork is distributed under the same AGPLv3 license as the original (see [License](#License)).
 
+### Building the Docker image
+
+This repo builds standalone, matching upstream's Alpine + Apache + PHP 8.3 runtime:
+
+```bash
+docker build -t nebula-hub .
+docker run -d --name nebula-hub -p 8077:80 -v nebula-hub-data:/htdocs nebula-hub
+```
+
+As with upstream LinkStack, `/htdocs` (config, database, uploads) is meant to live in a persistent volume — the image only ships the application code.
+
 <br>
 
 <a name="Function"></a>

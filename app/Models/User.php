@@ -26,6 +26,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'provider_id',
         'email_verified_at',
         'littlelink_name',
+        'littlelink_description',
+        'role',
+        'block',
     ];
 
     /**
@@ -55,6 +58,23 @@ class User extends Authenticatable implements MustVerifyEmail
     public function socialAccounts()
     {
         return $this->hasMany(SocialAccount::class);
+    }
+
+    public function tokens()
+    {
+        return $this->hasMany(PersonalAccessToken::class);
+    }
+
+    public function createToken(string $name): string
+    {
+        $plainTextToken = Str::random(40);
+
+        $this->tokens()->create([
+            'name' => $name,
+            'token' => hash('sha256', $plainTextToken),
+        ]);
+
+        return $plainTextToken;
     }
 
     protected static function boot()

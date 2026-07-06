@@ -14,6 +14,7 @@
 <br>
 
 <p align="center">
+  <a href="#Nebula-Hub-API">Nebula Hub API</a> •
   <a href="#Function">Function</a> •
   <a href="#About">About</a> •
   <a href="#Instances">Instances</a> •
@@ -49,6 +50,16 @@
 </p>
 
 ---
+
+## Nebula Hub — about this fork
+
+**Nebula Hub** is a fork of [LinkStack](https://github.com/linkstackorg/linkstack), maintained by [Nebula Systems](https://nebulasyst.com). All credit for the original platform — design, features, and the vast majority of the codebase below — belongs entirely to **[LinkStack](https://linkstack.org)** and its creator **[Julian Prieber](https://github.com/JulianPrieber)**, along with all the contributors listed in [Special thanks](#Special-thanks) and [Additional credit](#Additional-credit). We did not build LinkStack — we're simply extending it for our own hosted instance and sharing the change back, as required by its license.
+
+**What we added:** a REST API for managing users (login + CRUD), documented in [Nebula Hub API](#Nebula-Hub-API) below. Nothing else about the original project was removed or altered in spirit — this is the only functional addition on top of upstream LinkStack `v4.8.6`.
+
+This fork is distributed under the same AGPLv3 license as the original (see [License](#License)).
+
+<br>
 
 <a name="Function"></a>
 ## Function
@@ -215,6 +226,54 @@ The updater may fail without throwing an error and just remain on the current ve
 <p align="center">
   <a href="https://discord.linkstack.org"><img src="https://raw.githubusercontent.com/LinkStackOrg/branding/main/marketing/discord.png" alt="Join the Discord" width="600" ></a>
 </p>
+
+<br>
+
+<a name="Nebula-Hub-API"></a>
+## Nebula Hub API
+
+On top of upstream LinkStack, this fork adds a small REST API for managing users, authenticated with per-user bearer tokens (a lightweight, dependency-free equivalent of Laravel Sanctum).
+
+### Authentication
+
+Get a token by logging in with an existing user's credentials:
+
+```bash
+curl -X POST https://your-instance.example/api/login \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"email":"admin@example.com","password":"your-password"}'
+```
+
+Response:
+
+```json
+{
+  "token": "plain-text-token-shown-only-once",
+  "user": { "id": 1, "name": "Admin", "email": "admin@example.com", "role": "admin" }
+}
+```
+
+Send the token on every subsequent request:
+
+```
+Authorization: Bearer <token>
+```
+
+Only users with `role = admin` can call the endpoints below; anyone else gets `403 Forbidden`, and missing/invalid tokens get `401 Unauthorized`.
+
+### Endpoints
+
+| Method | Endpoint          | Description                  |
+|--------|-------------------|-------------------------------|
+| POST   | `/api/login`      | Exchange credentials for a token |
+| GET    | `/api/users`      | List all users                |
+| GET    | `/api/users/{id}` | Get a single user             |
+| POST   | `/api/users`      | Create a user                 |
+| PUT    | `/api/users/{id}` | Update a user                 |
+| DELETE | `/api/users/{id}` | Delete a user                 |
+
+`POST`/`PUT` accept `name`, `email`, `password`, `littlelink_name`, `littlelink_description`, `role` (`user`/`vip`/`admin`), and `block` (`yes`/`no`).
 
 <br>
 

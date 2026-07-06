@@ -69,5 +69,7 @@ class Kernel extends HttpKernel
         'blocked' => \App\Http\Middleware\CheckBlockedUser::class,
         'max.users' => \App\Http\Middleware\MaxUsers::class,
         'impersonate' => \App\Http\Middleware\Impersonate::class,
+        'api.token' => \App\Http\Middleware\ApiTokenAuthenticate::class,
+        'api.admin' => \App\Http\Middleware\ApiAdminOnly::class,
     ];
 }

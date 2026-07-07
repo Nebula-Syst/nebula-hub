@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ButtonController;
+use App\Http\Controllers\Api\LinkController;
+use App\Http\Controllers\Api\LinkTypeController;
+use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -20,9 +24,36 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Nebula Hub API — user management (added on top of upstream LinkStack)
+// Nebula Hub API — see /api/documentation for the full Swagger UI.
+
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware(['api.token', 'api.admin'])->group(function () {
-    Route::apiResource('users', UserController::class);
+// Public, read-only.
+Route::get('/pages', [PageController::class, 'show']);
+
+Route::middleware('api.token')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/me', [AuthController::class, 'me']);
+
+    Route::get('/links', [LinkController::class, 'index']);
+    Route::post('/links', [LinkController::class, 'store']);
+    Route::post('/links/reorder', [LinkController::class, 'reorder']);
+    Route::get('/links/{link}', [LinkController::class, 'show']);
+    Route::put('/links/{link}', [LinkController::class, 'update']);
+    Route::delete('/links/{link}', [LinkController::class, 'destroy']);
+
+    Route::get('/buttons', [ButtonController::class, 'index']);
+    Route::get('/buttons/{button}', [ButtonController::class, 'show']);
+
+    Route::get('/link-types', [LinkTypeController::class, 'index']);
+
+    Route::middleware('api.admin')->group(function () {
+        Route::apiResource('users', UserController::class);
+
+        Route::post('/buttons', [ButtonController::class, 'store']);
+        Route::put('/buttons/{button}', [ButtonController::class, 'update']);
+        Route::delete('/buttons/{button}', [ButtonController::class, 'destroy']);
+
+        Route::put('/pages', [PageController::class, 'update']);
+    });
 });

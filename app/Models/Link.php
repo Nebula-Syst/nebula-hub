@@ -9,7 +9,12 @@ class Link extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['link', 'title', 'button_id', 'type_params', 'type', 'custom_icon'];
+    protected $fillable = ['link', 'title', 'button_id', 'type_params', 'type', 'custom_icon', 'user_id', 'order', 'custom_css'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     protected static function boot()
     {

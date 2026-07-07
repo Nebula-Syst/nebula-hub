@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Button extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['name', 'alt', 'exclude', 'group', 'mb'];
 }

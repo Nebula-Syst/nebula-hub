@@ -722,7 +722,8 @@ $usrhandl = Auth::user()->littlelink_name;
         document.addEventListener("DOMContentLoaded", function() {
             var downloadButton = document.getElementById("downloadButton");
             var generatedImage = document.getElementById("generatedImage");
-        
+            if (!downloadButton || !generatedImage) return;
+
             downloadButton.addEventListener("click", function() {
                 var format = generatedImage.getAttribute("data-format") || "png";
                 var downloadLink = document.createElement("a");

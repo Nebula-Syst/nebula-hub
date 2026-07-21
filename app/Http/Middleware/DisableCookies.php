@@ -11,14 +11,15 @@ class DisableCookies
 
     public function handle(Request $request, Closure $next)
     {
-        $cookiesAlreadySet = $request->hasCookie(strtolower(config('app.name')).'_session') || $request->hasCookie('XSRF-TOKEN');
+        $sessionCookieName = str_replace(' ', '_', strtolower(config('app.name')).'_session');
+        $cookiesAlreadySet = $request->hasCookie($sessionCookieName) || $request->hasCookie('nebula-hub-xsrf-token');
 
         if ($cookiesAlreadySet) {
             return $next($request);
         }
 
-        Cookie::queue(Cookie::forget(str_replace(' ', '_', strtolower(config('app.name')).'_session')));
-        Cookie::queue(Cookie::forget('XSRF-TOKEN'));
+        Cookie::queue(Cookie::forget($sessionCookieName));
+        Cookie::queue(Cookie::forget('nebula-hub-xsrf-token'));
         config(['session.driver' => 'array']);
 
         $response = $next($request);

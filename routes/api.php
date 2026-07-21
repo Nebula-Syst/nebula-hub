@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminLinkController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ButtonController;
 use App\Http\Controllers\Api\LinkController;
@@ -49,6 +50,15 @@ Route::middleware('api.token')->group(function () {
 
     Route::middleware('api.admin')->group(function () {
         Route::apiResource('users', UserController::class);
+
+        Route::prefix('users/{user}/links')->group(function () {
+            Route::get('/', [AdminLinkController::class, 'index']);
+            Route::post('/', [AdminLinkController::class, 'store']);
+            Route::post('/reorder', [AdminLinkController::class, 'reorder']);
+            Route::get('/{link}', [AdminLinkController::class, 'show']);
+            Route::put('/{link}', [AdminLinkController::class, 'update']);
+            Route::delete('/{link}', [AdminLinkController::class, 'destroy']);
+        });
 
         Route::post('/buttons', [ButtonController::class, 'store']);
         Route::put('/buttons/{button}', [ButtonController::class, 'update']);

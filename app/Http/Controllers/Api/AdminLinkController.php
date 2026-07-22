@@ -198,7 +198,10 @@ class AdminLinkController extends Controller
         $rule = fn (string $r) => $sometimes ? "sometimes|$r" : "required|$r";
 
         $data = $request->validate([
-            'link' => $rule('string'),
+            // Nullable, no required: bloques como heading/spacer/text no llevan
+            // link real (ver blocks/{heading,spacer,text}/handler.php en Hub —
+            // ninguno incluye la clave 'link' en su $linkData).
+            'link' => 'nullable|string',
             'title' => $rule('string'),
             'type' => 'nullable|string',
             'button_id' => ['nullable', 'integer', Rule::exists('buttons', 'id')],

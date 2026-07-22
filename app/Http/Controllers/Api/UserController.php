@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -19,17 +20,32 @@ class UserController extends Controller
     ];
 
     /**
-     * VISIBLE_FIELDS + avatar_url, calculado con el mismo helper findAvatar()
-     * que usa la vista de autoservicio (el avatar es un fichero en
-     * assets/img/{id}_*.ext, no una columna).
+     * checkmark/share_button/links_new_tab no son columnas — se guardan como
+     * flags en el JSON del campo `image` vía UserData::saveData(), igual que
+     * hace la vista de autoservicio (studio/page.blade.php). A diferencia de
+     * findAvatar(), UserData sí refresca su propia cache en cada save(), así
+     * que encadenar getData()/saveData() dentro de la misma request es seguro.
      */
-    private static function withAvatar(User $user): array
+    private static function withPreferences(User $user): array
+    {
+        return [
+            'checkmark'      => UserData::getData($user->id, 'checkmark') === true,
+            'share_button'   => UserData::getData($user->id, 'disable-sharebtn') !== true,
+            'links_new_tab'  => UserData::getData($user->id, 'links-new-tab') !== false,
+        ];
+    }
+
+    /**
+     * VISIBLE_FIELDS + avatar_url (findAvatar(), fichero en assets/img/) +
+     * preferencias de la página (withPreferences()).
+     */
+    private static function withMeta(User $user): array
     {
         $data = $user->only(self::VISIBLE_FIELDS);
         $avatar = findAvatar($user->id);
         $data['avatar_url'] = $avatar !== 'error.error' ? url($avatar) : null;
 
-        return $data;
+        return $data + self::withPreferences($user);
     }
 
     /**
@@ -69,7 +85,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        return User::all()->map(fn (User $user) => self::withAvatar($user))->values();
+        return User::all()->map(fn (User $user) => self::withMeta($user))->values();
     }
 
     /**
@@ -85,7 +101,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return self::withAvatar($user);
+        return self::withMeta($user);
     }
 
     /**
@@ -125,7 +141,7 @@ class UserController extends Controller
 
         $user = User::create($data);
 
-        return response()->json(self::withAvatar($user), 201);
+        return response()->json(self::withMeta($user), 201);
     }
 
     /**
@@ -168,7 +184,7 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return response()->json(self::withAvatar($user));
+        return response()->json(self::withMeta($user));
     }
 
     /**
@@ -204,7 +220,7 @@ class UserController extends Controller
         $data = $user->only(self::VISIBLE_FIELDS);
         $data['avatar_url'] = url('assets/img/' . $fileName);
 
-        return response()->json($data);
+        return response()->json($data + self::withPreferences($user));
     }
 
     /**
@@ -224,7 +240,52 @@ class UserController extends Controller
         $data = $user->only(self::VISIBLE_FIELDS);
         $data['avatar_url'] = null;
 
-        return response()->json($data);
+        return response()->json($data + self::withPreferences($user));
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/users/{user}/preferences",
+     *     tags={"Users"},
+     *     summary="Update a user's page preferences (checkmark badge, share button, links in new tab)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="user", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="checkmark", type="boolean", description="Solo tiene efecto si el usuario es vip/admin"),
+     *             @OA\Property(property="share_button", type="boolean"),
+     *             @OA\Property(property="links_new_tab", type="boolean")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Updated", @OA\JsonContent(ref="#/components/schemas/User")),
+     *     @OA\Response(response=422, description="Validation error", @OA\JsonContent(ref="#/components/schemas/Message"))
+     * )
+     */
+    public function updatePreferences(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'checkmark'      => ['sometimes', 'boolean'],
+            'share_button'   => ['sometimes', 'boolean'],
+            'links_new_tab'  => ['sometimes', 'boolean'],
+        ]);
+
+        // El badge de verificado solo es autoservicio para usuarios que ya
+        // son vip/admin — mismo gate que studio/page.blade.php
+        // (@if(auth()->user()->role == 'admin' || auth()->user()->role == 'vip')).
+        if (array_key_exists('checkmark', $validated)) {
+            $checkmark = $validated['checkmark'] && in_array($user->role, ['vip', 'admin'], true);
+            UserData::saveData($user->id, 'checkmark', $checkmark);
+        }
+
+        if (array_key_exists('share_button', $validated)) {
+            UserData::saveData($user->id, 'disable-sharebtn', ! $validated['share_button']);
+        }
+
+        if (array_key_exists('links_new_tab', $validated)) {
+            UserData::saveData($user->id, 'links-new-tab', $validated['links_new_tab']);
+        }
+
+        return response()->json(self::withMeta($user));
     }
 
     /**

@@ -52,6 +52,7 @@ Route::middleware('api.token')->group(function () {
         Route::apiResource('users', UserController::class);
         Route::post('/users/{user}/avatar', [UserController::class, 'updateAvatar']);
         Route::delete('/users/{user}/avatar', [UserController::class, 'destroyAvatar']);
+        Route::put('/users/{user}/preferences', [UserController::class, 'updatePreferences']);
 
         Route::prefix('users/{user}/links')->group(function () {
             Route::get('/', [AdminLinkController::class, 'index']);

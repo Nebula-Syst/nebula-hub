@@ -16,7 +16,7 @@ class UserController extends Controller
 {
     private const VISIBLE_FIELDS = [
         'id', 'name', 'email', 'littlelink_name', 'littlelink_description',
-        'role', 'block', 'email_verified_at', 'created_at', 'updated_at',
+        'role', 'block', 'theme', 'email_verified_at', 'created_at', 'updated_at',
     ];
 
     /**
@@ -176,6 +176,7 @@ class UserController extends Controller
             'littlelink_description' => 'nullable|string',
             'role' => ['sometimes', Rule::in(['user', 'vip', 'admin'])],
             'block' => ['sometimes', Rule::in(['yes', 'no'])],
+            'theme' => ['sometimes', 'string'],
         ]);
 
         if (isset($data['password'])) {

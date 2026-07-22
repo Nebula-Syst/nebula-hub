@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ButtonController;
 use App\Http\Controllers\Api\LinkController;
 use App\Http\Controllers\Api\LinkTypeController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\ThemeController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -68,5 +69,9 @@ Route::middleware('api.token')->group(function () {
         Route::delete('/buttons/{button}', [ButtonController::class, 'destroy']);
 
         Route::put('/pages', [PageController::class, 'update']);
+
+        Route::get('/themes', [ThemeController::class, 'index']);
+        Route::post('/themes', [ThemeController::class, 'store']);
+        Route::delete('/themes/{key}', [ThemeController::class, 'destroy']);
     });
 });
